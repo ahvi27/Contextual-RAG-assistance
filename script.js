@@ -48,13 +48,16 @@ function retrieve(question) {
 function buildGroundedAnswer(results) {
   if (!results.length) return {
     heading: 'NOT ENOUGH EVIDENCE',
+    summary: 'The connected sources do not cover this question.',
     text: 'I can’t answer that from the active knowledge sources. Try rephrasing the question, enabling another source, or adding a document that covers this topic.',
-    citations: []
+    citations: [], confidence: null
   };
   return {
-    heading: `GROUNDED IN ${results.length} SOURCE PASSAGE${results.length === 1 ? '' : 'S'}`,
+    heading: `ANSWER · ${results.length} SUPPORTING PASSAGE${results.length === 1 ? '' : 'S'}`,
+    summary: results.length > 1 ? 'The evidence points to a consistent direction.' : 'One relevant finding is available.',
     text: results.map((result) => result.text).join(' '),
-    citations: results.map((result) => result.citation)
+    citations: results.map((result) => result.citation),
+    confidence: results.length > 1 ? 'High confidence' : 'Limited evidence'
   };
 }
 
@@ -66,14 +69,17 @@ function askQuestion(question) {
   thread.innerHTML = `<div class="message user"><p>${escapeHtml(question)}</p></div>`;
   input.value = '';
   input.style.height = 'auto';
+  thread.insertAdjacentHTML('beforeend', '<div class="message assistant loading"><div class="loading-answer"><span>Reviewing active sources</span><i></i><i></i><i></i></div></div>');
 
   setTimeout(() => {
+    $('.loading')?.remove();
     const response = buildGroundedAnswer(retrieve(question));
     const citations = response.citations.map((citation, index) => `<span class="citation">[${index + 1}] ${escapeHtml(citation)}</span>`).join('');
     thread.insertAdjacentHTML('beforeend', `
       <div class="message assistant">
         <div class="answer">
-          <div class="answer-head">✦ ${response.heading}</div>
+          <div class="answer-head"><span>✦ ${response.heading}</span>${response.confidence ? `<span class="confidence">● ${response.confidence}</span>` : ''}</div>
+          <p class="answer-summary">${escapeHtml(response.summary)}</p>
           <p>${escapeHtml(response.text)}</p>
           ${citations ? `<div class="citations">${citations}</div>` : ''}
         </div>
@@ -117,7 +123,10 @@ $('.share-button').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(location.href); } catch (_) {}
   notify('Workspace link copied');
 });
-$('#addSource').addEventListener('click', () => notify('Source picker ready'));
+$('#addSource').addEventListener('click', () => $('#sourceDialog').showModal());
+$$('.connector-grid button').forEach((button) => button.addEventListener('click', () => {
+  if (button.value !== 'cancel') setTimeout(() => notify(`${button.querySelector('strong').textContent} selected`), 100);
+}));
 $('#themeToggle').addEventListener('click', () => document.body.classList.toggle('dark'));
 $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
 $('#collapsePanel').addEventListener('click', () => {

@@ -69,9 +69,9 @@
       <section class="workspace">
         <div class="conversation">
           <div class="hero-copy">
-            <div class="context-pill"><span>✦</span> CONTEXTUAL INTELLIGENCE</div>
-            <h1>Your knowledge,<br><em>in context.</em></h1>
-            <p>Ask complex questions across your sources. Lumen retrieves the right context, connects the dots, and shows its work.</p>
+            <div class="context-pill"><span>✦</span> EVIDENCE-FIRST AI</div>
+            <h1>Turn scattered knowledge<br>into <em>clear decisions.</em></h1>
+            <p>Ask complex questions across your workspace. Lumen finds the strongest evidence, connects related insights, and cites every answer.</p>
           </div>
 
           <div class="suggestions" aria-label="Suggested questions">
@@ -107,7 +107,7 @@
           <div class="coverage-card">
             <div class="coverage-top"><span>Context coverage</span><strong>92%</strong></div>
             <div class="progress"><span></span></div>
-            <p>Strong coverage across 12 indexed sources</p>
+            <p><span class="live-dot"></span> All selected sources are ready</p>
           </div>
 
           <div class="source-list" id="sourceList">
@@ -146,6 +146,21 @@
       </section>
     </main>
   </div>
+  <dialog class="source-dialog" id="sourceDialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <div><p class="eyebrow">NEW CONNECTION</p><h2>Add a knowledge source</h2><p>Connect content to make it searchable in your workspace.</p></div>
+        <button value="cancel" aria-label="Close">×</button>
+      </div>
+      <div class="connector-grid">
+        <button value="drive"><span class="connector-icon drive">◆</span><span><strong>Google Drive</strong><small>Docs, sheets, and PDFs</small></span><b>→</b></button>
+        <button value="notion"><span class="connector-icon notion">N</span><span><strong>Notion</strong><small>Pages and databases</small></span><b>→</b></button>
+        <button value="upload"><span class="connector-icon upload">↑</span><span><strong>Upload files</strong><small>PDF, DOCX, TXT, or CSV</small></span><b>→</b></button>
+        <button value="web"><span class="connector-icon web">◎</span><span><strong>Website</strong><small>Crawl a public URL</small></span><b>→</b></button>
+      </div>
+      <p class="dialog-note">Your data stays private and is never used to train shared models.</p>
+    </form>
+  </dialog>
   <div class="toast" id="toast">Link copied to clipboard</div>
   <script src="script.js"></script>
 </body>
