@@ -28,6 +28,15 @@
         <button class="nav-item" data-section="history">
           <span class="nav-icon">◷</span><span>History</span>
         </button>
+        <button class="nav-item" data-section="collections">
+          <span class="nav-icon">▦</span><span>Collections</span><span class="count">3</span>
+        </button>
+        <button class="nav-item" data-section="insights">
+          <span class="nav-icon">⌁</span><span>Insights</span>
+        </button>
+        <button class="nav-item" data-section="settings">
+          <span class="nav-icon">⚙</span><span>Settings</span>
+        </button>
       </nav>
 
       <div class="recent-wrap">
@@ -181,6 +190,42 @@
           <button class="history-card" data-question="Summarize the key product risks."><span class="history-icon">✦</span><span><strong>Q4 customer signals</strong><small>Summarize the key product risks.</small><em>8 messages · Yesterday, 4:32 PM</em></span><b>→</b></button>
           <p class="group-label">LAST 7 DAYS</p>
           <button class="history-card" data-question="Where do our research and roadmap disagree?"><span class="history-icon">✦</span><span><strong>Market expansion brief</strong><small>Where do our research and roadmap disagree?</small><em>5 messages · Aug 12</em></span><b>→</b></button>
+        </div>
+      </section>
+
+      <section class="page-view" id="collectionsView" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">ORGANIZE KNOWLEDGE</p><h1>Collections</h1><p>Group sources by project, team, or research topic.</p></div>
+          <button class="primary-action" id="createCollection">＋ New collection</button>
+        </div>
+        <div class="collection-grid">
+          <button class="collection-card" data-collection-question="Summarize the product strategy and roadmap."><span class="collection-cover violet">PS</span><span class="collection-meta"><small>4 SOURCES</small><strong>Product strategy</strong><p>Roadmap, customer research, and competitive context.</p><em>Updated 2 minutes ago</em></span><b>→</b></button>
+          <button class="collection-card" data-collection-question="What themes are emerging across customer feedback?"><span class="collection-cover coral-bg">CX</span><span class="collection-meta"><small>3 SOURCES</small><strong>Customer voice</strong><p>Interviews, support themes, and research synthesis.</p><em>Updated yesterday</em></span><b>→</b></button>
+          <button class="collection-card" data-collection-question="What are the biggest competitive risks?"><span class="collection-cover green-bg">MI</span><span class="collection-meta"><small>5 SOURCES</small><strong>Market intelligence</strong><p>Competitors, category signals, and positioning.</p><em>Updated Aug 12</em></span><b>→</b></button>
+        </div>
+      </section>
+
+      <section class="page-view" id="insightsView" hidden>
+        <div class="page-heading"><div><p class="eyebrow">WORKSPACE ANALYTICS</p><h1>Insights</h1><p>Understand how your team uses and trusts workspace knowledge.</p></div><button class="secondary-action" id="exportInsights">↓ Export report</button></div>
+        <div class="stats-grid insight-stats">
+          <article><span>Questions answered</span><strong>248</strong><small class="positive">↑ 18% this month</small></article>
+          <article><span>Citation coverage</span><strong>96.2%</strong><small class="positive">↑ 3.4% this month</small></article>
+          <article><span>Helpful rating</span><strong>91%</strong><small>Based on 117 ratings</small></article>
+        </div>
+        <div class="insight-layout">
+          <article class="chart-card"><div class="card-title"><span><strong>Questions over time</strong><small>Last 7 days</small></span><button>Weekly⌄</button></div><div class="bar-chart"><i style="--h:42%"><b>Mon</b></i><i style="--h:68%"><b>Tue</b></i><i style="--h:53%"><b>Wed</b></i><i style="--h:82%"><b>Thu</b></i><i style="--h:64%"><b>Fri</b></i><i style="--h:91%"><b>Sat</b></i><i style="--h:76%"><b>Sun</b></i></div></article>
+          <article class="chart-card"><div class="card-title"><span><strong>Top knowledge sources</strong><small>By citation frequency</small></span></div><div class="ranking"><p><span>Customer interviews</span><b>38%</b></p><i><b style="width:38%"></b></i><p><span>Q3 research synthesis</span><b>29%</b></p><i><b style="width:29%"></b></i><p><span>Product strategy 2025</span><b>21%</b></p><i><b style="width:21%"></b></i><p><span>Competitive landscape</span><b>12%</b></p><i><b style="width:12%"></b></i></div></article>
+        </div>
+      </section>
+
+      <section class="page-view" id="settingsView" hidden>
+        <div class="page-heading"><div><p class="eyebrow">PREFERENCES</p><h1>Settings</h1><p>Configure how Lumen retrieves, responds, and handles your data.</p></div><button class="primary-action" id="saveSettings">Save changes</button></div>
+        <div class="settings-layout">
+          <nav class="settings-nav"><button class="active">General</button><button>Retrieval</button><button>Privacy</button><button>Team</button></nav>
+          <div class="settings-card">
+            <div class="setting-section"><h2>Answer preferences</h2><p>Set the default behavior for generated answers.</p><label class="field-label">Default response style<select id="responseStyle"><option>Balanced</option><option>Concise</option><option>Detailed</option></select></label><label class="toggle-row setting-toggle"><span><strong>Always show confidence</strong><small>Display evidence strength on every answer</small></span><input id="showConfidence" type="checkbox" checked><i></i></label><label class="toggle-row setting-toggle"><span><strong>Require citations</strong><small>Refuse answers without supporting passages</small></span><input id="requireCitations" type="checkbox" checked><i></i></label></div>
+            <div class="setting-section"><h2>Appearance</h2><p>Choose how the workspace looks.</p><div class="appearance-options"><button data-theme="light">☼<span>Light</span></button><button data-theme="dark">◐<span>Dark</span></button><button data-theme="system">◑<span>System</span></button></div></div>
+          </div>
         </div>
       </section>
     </main>

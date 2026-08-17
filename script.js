@@ -172,7 +172,7 @@ function askQuestion(question) {
     thread.insertAdjacentHTML('beforeend', `
       <div class="message assistant">
         <div class="answer">
-          <div class="answer-head"><span>✦ ${response.heading}</span>${response.confidence ? `<span class="confidence">● ${response.confidence}</span>` : ''}</div>
+          <div class="answer-head"><span>✦ ${response.heading}</span>${response.confidence && $('#showConfidence').checked ? `<span class="confidence">● ${response.confidence}</span>` : ''}</div>
           <p class="answer-summary">${escapeHtml(response.summary)}</p>
           <p>${escapeHtml(response.text)}</p>
           ${citations ? `<div class="citations">${citations}</div>` : ''}
@@ -216,10 +216,11 @@ $$('.source').forEach((source) => source.addEventListener('click', () => {
   notify(source.classList.contains('active-source') ? 'Source added to context' : 'Source removed from context');
 }));
 function showView(name) {
-  const titles = { workspace: 'Product strategy synthesis', sources: 'Sources', history: 'History' };
+  const titles = { workspace: 'Product strategy synthesis', sources: 'Sources', history: 'History', collections: 'Collections', insights: 'Insights', settings: 'Settings' };
   $('.workspace').hidden = name !== 'workspace';
-  $('#sourcesView').hidden = name !== 'sources';
-  $('#historyView').hidden = name !== 'history';
+  ['sources', 'history', 'collections', 'insights', 'settings'].forEach((view) => {
+    $(`#${view}View`).hidden = name !== view;
+  });
   $$('.nav-item').forEach((nav) => nav.classList.toggle('active', nav.dataset.section === name));
   $('.breadcrumb strong').textContent = titles[name];
   $('.status').style.display = name === 'workspace' ? 'block' : 'none';
@@ -329,7 +330,7 @@ $('#depth').addEventListener('input', (event) => {
 });
 
 const initialView = location.hash.replace('#', '');
-if (['sources', 'history'].includes(initialView)) showView(initialView);
+if (['sources', 'history', 'collections', 'insights', 'settings'].includes(initialView)) showView(initialView);
 
 thread.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-answer-action]');
@@ -355,6 +356,11 @@ thread.addEventListener('click', async (event) => {
 });
 
 if (readStorage('lumen-dark-mode', false)) document.body.classList.add('dark');
+const savedPreferences = readStorage('lumen-preferences', { responseStyle: 'Balanced', showConfidence: true, requireCitations: true, theme: 'system' });
+$('#responseStyle').value = savedPreferences.responseStyle;
+$('#showConfidence').checked = savedPreferences.showConfidence;
+$('#requireCitations').checked = savedPreferences.requireCitations;
+$$('.appearance-options button').forEach((button) => button.classList.toggle('active', button.dataset.theme === savedPreferences.theme));
 const storedSources = readStorage('lumen-active-sources', null);
 if (storedSources) {
   $$('.source').forEach((source) => source.classList.toggle('active-source', storedSources.includes(source.querySelector('strong').textContent.trim())));
@@ -370,3 +376,48 @@ if (readStorage('lumen-history-cleared', false)) {
 } else {
   renderSavedHistory();
 }
+
+$('#collectionsView').addEventListener('click', (event) => {
+  const card = event.target.closest('[data-collection-question]');
+  if (card) openPastThread(card.dataset.collectionQuestion);
+});
+
+$('#createCollection').addEventListener('click', () => {
+  const name = window.prompt('Collection name');
+  if (!name?.trim()) return;
+  $('.collection-grid').insertAdjacentHTML('beforeend', `<button class="collection-card" data-collection-question="What should I know about ${escapeHtml(name)}?"><span class="collection-cover violet">${escapeHtml(name.trim().slice(0, 2).toUpperCase())}</span><span class="collection-meta"><small>0 SOURCES</small><strong>${escapeHtml(name.trim())}</strong><p>A new collection ready for knowledge sources.</p><em>Created just now</em></span><b>→</b></button>`);
+  notify('Collection created');
+});
+
+$('#exportInsights').addEventListener('click', () => {
+  const report = 'Lumen workspace insights\n\nQuestions answered: 248\nCitation coverage: 96.2%\nHelpful rating: 91%\n';
+  const url = URL.createObjectURL(new Blob([report], { type: 'text/plain' }));
+  const link = document.createElement('a'); link.href = url; link.download = 'lumen-insights.txt'; link.click(); URL.revokeObjectURL(url);
+  notify('Insights report exported');
+});
+
+$$('.settings-nav button').forEach((button) => button.addEventListener('click', () => {
+  $$('.settings-nav button').forEach((item) => item.classList.remove('active'));
+  button.classList.add('active');
+  notify(`${button.textContent} settings selected`);
+}));
+
+$$('.appearance-options button').forEach((button) => button.addEventListener('click', () => {
+  $$('.appearance-options button').forEach((item) => item.classList.remove('active'));
+  button.classList.add('active');
+  const theme = button.dataset.theme;
+  const shouldUseDark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.body.classList.toggle('dark', shouldUseDark);
+}));
+
+$('#saveSettings').addEventListener('click', () => {
+  const preferences = {
+    responseStyle: $('#responseStyle').value,
+    showConfidence: $('#showConfidence').checked,
+    requireCitations: $('#requireCitations').checked,
+    theme: $('.appearance-options button.active')?.dataset.theme || 'system'
+  };
+  writeStorage('lumen-preferences', preferences);
+  writeStorage('lumen-dark-mode', document.body.classList.contains('dark'));
+  notify('Settings saved');
+});
