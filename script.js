@@ -6,6 +6,14 @@ const input = $('#question');
 const thread = $('#thread');
 const toast = $('#toast');
 
+function readStorage(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (_) { return fallback; }
+}
+
+function writeStorage(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+}
+
 // Local demo corpus. A production backend can replace these chunks with results
 // from a vector database while keeping the same grounded-answer contract.
 const knowledge = [
@@ -24,6 +32,28 @@ function notify(message) {
   toast.classList.add('show');
   clearTimeout(window.toastTimer);
   window.toastTimer = setTimeout(() => toast.classList.remove('show'), 1900);
+}
+
+function saveHistory(question) {
+  const history = readStorage('lumen-history', []);
+  const next = [{ question, time: new Date().toISOString() }, ...history.filter((item) => item.question !== question)].slice(0, 20);
+  writeStorage('lumen-history', next);
+  writeStorage('lumen-history-cleared', false);
+  renderSavedHistory();
+}
+
+function renderSavedHistory() {
+  $$('.saved-history').forEach((item) => item.remove());
+  const history = readStorage('lumen-history', []);
+  if (!$('#historyList .group-label')) $('#historyList').innerHTML = '<p class="group-label">RECENT</p>';
+  const anchor = $('#historyList .group-label');
+  history.slice(0, 6).reverse().forEach((item) => {
+    anchor.insertAdjacentHTML('afterend', `<button class="history-card saved-history" data-question="${escapeHtml(item.question)}"><span class="history-icon">✦</span><span><strong>${escapeHtml(item.question.slice(0, 52))}</strong><small>${escapeHtml(item.question)}</small><em>Saved in this browser · ${new Date(item.time).toLocaleDateString()}</em></span><b>→</b></button>`);
+  });
+}
+
+function persistActiveSources() {
+  writeStorage('lumen-active-sources', $$('.source.active-source strong').map((node) => node.textContent.trim()));
 }
 
 function tokenize(value) {
@@ -132,6 +162,7 @@ function askQuestion(question) {
   thread.innerHTML = `<div class="message user"><p>${escapeHtml(question)}</p></div>`;
   input.value = '';
   input.style.height = 'auto';
+  saveHistory(question);
   thread.insertAdjacentHTML('beforeend', '<div class="message assistant loading"><div class="loading-answer"><span>Reviewing active sources</span><i></i><i></i><i></i></div></div>');
 
   setTimeout(() => {
@@ -145,6 +176,13 @@ function askQuestion(question) {
           <p class="answer-summary">${escapeHtml(response.summary)}</p>
           <p>${escapeHtml(response.text)}</p>
           ${citations ? `<div class="citations">${citations}</div>` : ''}
+          <div class="answer-actions">
+            <button class="answer-action" data-answer-action="copy">▣ Copy</button>
+            <button class="answer-action" data-answer-action="export">↓ Export</button>
+            <span class="action-spacer"></span>
+            <button class="answer-action" data-answer-action="helpful" aria-label="Helpful answer">♡ Helpful</button>
+            <button class="answer-action" data-answer-action="report" aria-label="Report answer">⚑</button>
+          </div>
         </div>
       </div>`);
     thread.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -174,6 +212,7 @@ input.addEventListener('keydown', (event) => {
 $$('.suggestions button').forEach((button) => button.addEventListener('click', () => askQuestion(button.dataset.prompt)));
 $$('.source').forEach((source) => source.addEventListener('click', () => {
   source.classList.toggle('active-source');
+  persistActiveSources();
   notify(source.classList.contains('active-source') ? 'Source added to context' : 'Source removed from context');
 }));
 function showView(name) {
@@ -196,7 +235,10 @@ function openPastThread(question) {
   setTimeout(() => askQuestion(question), 80);
 }
 
-$$('.history-card').forEach((card) => card.addEventListener('click', () => openPastThread(card.dataset.question)));
+$('#historyList').addEventListener('click', (event) => {
+  const card = event.target.closest('.history-card');
+  if (card) openPastThread(card.dataset.question);
+});
 $$('.recent').forEach((item, index) => item.addEventListener('click', () => {
   const questions = [
     'What themes are emerging across customer feedback?',
@@ -215,6 +257,15 @@ $('#newThread').addEventListener('click', () => {
   input.focus();
 });
 
+$('#clearHistory').addEventListener('click', () => {
+  writeStorage('lumen-history', []);
+  writeStorage('lumen-history-cleared', true);
+  $$('#historyList .history-card').forEach((card) => card.remove());
+  $$('#historyList .group-label').forEach((label) => label.remove());
+  $('#historyList').innerHTML = '<div class="empty-results">No saved conversations yet.<br>Start a new thread to create one.</div>';
+  notify('Conversation history cleared');
+});
+
 function filterItems(inputSelector, itemSelector, textGetter) {
   $(inputSelector).addEventListener('input', (event) => {
     const query = event.target.value.trim().toLowerCase();
@@ -231,6 +282,7 @@ $$('.source-table .table-row:not(.table-head)').forEach((row) => row.addEventLis
   const sourceName = row.dataset.sourceName;
   const matchingSource = $$('.source').find((source) => source.querySelector('strong').textContent.trim() === sourceName);
   matchingSource?.classList.toggle('active-source');
+  persistActiveSources();
   const included = matchingSource?.classList.contains('active-source');
   row.querySelector('.ready').innerHTML = included ? '● Included' : '○ Excluded';
   row.querySelector('.ready').style.color = included ? '#55a184' : '#9b96a0';
@@ -257,7 +309,10 @@ $$('[data-open-source]').forEach((button) => button.addEventListener('click', ()
 $$('.connector-grid button').forEach((button) => button.addEventListener('click', () => {
   if (button.value !== 'cancel') setTimeout(() => notify(`${button.querySelector('strong').textContent} selected`), 100);
 }));
-$('#themeToggle').addEventListener('click', () => document.body.classList.toggle('dark'));
+$('#themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  writeStorage('lumen-dark-mode', document.body.classList.contains('dark'));
+});
 $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
 $('#collapsePanel').addEventListener('click', () => {
   $('.context-panel').style.display = 'none';
@@ -275,3 +330,43 @@ $('#depth').addEventListener('input', (event) => {
 
 const initialView = location.hash.replace('#', '');
 if (['sources', 'history'].includes(initialView)) showView(initialView);
+
+thread.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-answer-action]');
+  if (!button) return;
+  const answer = button.closest('.answer');
+  const answerText = [...answer.querySelectorAll('p')].map((node) => node.textContent).join('\n\n');
+  const citationsText = [...answer.querySelectorAll('.citation')].map((node) => node.textContent).join('\n');
+  const action = button.dataset.answerAction;
+  if (action === 'copy') {
+    try { await navigator.clipboard.writeText(`${answerText}${citationsText ? `\n\nSources\n${citationsText}` : ''}`); } catch (_) {}
+    notify('Answer copied to clipboard');
+  } else if (action === 'export') {
+    const blob = new Blob([`${answerText}${citationsText ? `\n\nSources\n${citationsText}` : ''}`], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = `lumen-answer-${Date.now()}.txt`; link.click();
+    URL.revokeObjectURL(url);
+    notify('Answer exported');
+  } else {
+    button.classList.toggle('selected');
+    notify(action === 'helpful' ? 'Thanks for the feedback' : 'Answer flagged for review');
+  }
+});
+
+if (readStorage('lumen-dark-mode', false)) document.body.classList.add('dark');
+const storedSources = readStorage('lumen-active-sources', null);
+if (storedSources) {
+  $$('.source').forEach((source) => source.classList.toggle('active-source', storedSources.includes(source.querySelector('strong').textContent.trim())));
+  $$('.source-table .table-row:not(.table-head)').forEach((row) => {
+    const included = storedSources.includes(row.dataset.sourceName);
+    row.querySelector('.ready').innerHTML = included ? '● Included' : '○ Excluded';
+    row.querySelector('.ready').style.color = included ? '#55a184' : '#9b96a0';
+  });
+}
+if (readStorage('lumen-history-cleared', false)) {
+  $$('#historyList .history-card, #historyList .group-label').forEach((item) => item.remove());
+  $('#historyList').innerHTML = '<div class="empty-results">No saved conversations yet.<br>Start a new thread to create one.</div>';
+} else {
+  renderSavedHistory();
+}
