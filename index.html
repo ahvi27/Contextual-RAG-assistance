@@ -13,10 +13,10 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand">
+      <button class="brand" id="brandHome" aria-label="Go to workspace">
         <span class="brand-mark"><span></span></span>
         <span>Lumen</span>
-      </div>
+      </button>
 
       <nav class="nav" aria-label="Primary navigation">
         <button class="nav-item active" data-section="workspace">
@@ -143,6 +143,45 @@
             </div>
           </div>
         </aside>
+      </section>
+
+      <section class="page-view" id="sourcesView" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">KNOWLEDGE BASE</p><h1>Sources</h1><p>Manage the content Lumen uses to ground its answers.</p></div>
+          <button class="primary-action" data-open-source>＋ Add source</button>
+        </div>
+        <div class="stats-grid">
+          <article><span>Indexed sources</span><strong>12</strong><small>Across 4 connections</small></article>
+          <article><span>Searchable passages</span><strong>1,284</strong><small>Updated 2 minutes ago</small></article>
+          <article><span>Index health</span><strong class="healthy">98.6%</strong><small>All systems operational</small></article>
+        </div>
+        <div class="data-card">
+          <div class="data-toolbar"><label class="search-field">⌕ <input id="sourceSearch" placeholder="Search sources..."></label><button class="filter-button">All types⌄</button></div>
+          <div class="source-table" id="sourceTable">
+            <div class="table-row table-head"><span>Name</span><span>Connection</span><span>Status</span><span>Updated</span><span></span></div>
+            <button class="table-row" data-source-name="Product strategy 2025"><span><i class="file-icon purple">▤</i><b>Product strategy 2025</b></span><span>PDF upload</span><span class="ready">● Ready</span><span>2m ago</span><span>•••</span></button>
+            <button class="table-row" data-source-name="Customer interviews"><span><i class="file-icon coral">◇</i><b>Customer interviews</b></span><span>Notion</span><span class="ready">● Ready</span><span>8m ago</span><span>•••</span></button>
+            <button class="table-row" data-source-name="Q3 research synthesis"><span><i class="file-icon mint">▦</i><b>Q3 research synthesis</b></span><span>Google Drive</span><span class="ready">● Ready</span><span>1h ago</span><span>•••</span></button>
+            <button class="table-row" data-source-name="Competitive landscape"><span><i class="file-icon gold">⌘</i><b>Competitive landscape</b></span><span>Web collection</span><span class="ready">● Ready</span><span>Yesterday</span><span>•••</span></button>
+          </div>
+          <p class="table-footer">Showing 4 of 12 sources</p>
+        </div>
+      </section>
+
+      <section class="page-view" id="historyView" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">CONVERSATIONS</p><h1>History</h1><p>Return to previous research and continue where you left off.</p></div>
+          <button class="primary-action" id="newThread">＋ New thread</button>
+        </div>
+        <div class="history-tools"><label class="search-field">⌕ <input id="historySearch" placeholder="Search conversations..."></label></div>
+        <div class="history-groups" id="historyList">
+          <p class="group-label">TODAY</p>
+          <button class="history-card" data-question="What themes are emerging across customer feedback?"><span class="history-icon">✦</span><span><strong>Product strategy synthesis</strong><small>What themes are emerging across customer feedback?</small><em>3 messages · 2 minutes ago</em></span><b>→</b></button>
+          <p class="group-label">YESTERDAY</p>
+          <button class="history-card" data-question="Summarize the key product risks."><span class="history-icon">✦</span><span><strong>Q4 customer signals</strong><small>Summarize the key product risks.</small><em>8 messages · Yesterday, 4:32 PM</em></span><b>→</b></button>
+          <p class="group-label">LAST 7 DAYS</p>
+          <button class="history-card" data-question="Where do our research and roadmap disagree?"><span class="history-icon">✦</span><span><strong>Market expansion brief</strong><small>Where do our research and roadmap disagree?</small><em>5 messages · Aug 12</em></span><b>→</b></button>
+        </div>
       </section>
     </main>
   </div>

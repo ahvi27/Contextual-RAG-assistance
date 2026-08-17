@@ -176,17 +176,84 @@ $$('.source').forEach((source) => source.addEventListener('click', () => {
   source.classList.toggle('active-source');
   notify(source.classList.contains('active-source') ? 'Source added to context' : 'Source removed from context');
 }));
-$$('.nav-item').forEach((item) => item.addEventListener('click', () => {
-  $$('.nav-item').forEach((nav) => nav.classList.remove('active'));
-  item.classList.add('active');
-  notify(`${item.dataset.section[0].toUpperCase() + item.dataset.section.slice(1)} selected`);
+function showView(name) {
+  const titles = { workspace: 'Product strategy synthesis', sources: 'Sources', history: 'History' };
+  $('.workspace').hidden = name !== 'workspace';
+  $('#sourcesView').hidden = name !== 'sources';
+  $('#historyView').hidden = name !== 'history';
+  $$('.nav-item').forEach((nav) => nav.classList.toggle('active', nav.dataset.section === name));
+  $('.breadcrumb strong').textContent = titles[name];
+  $('.status').style.display = name === 'workspace' ? 'block' : 'none';
+  $('#sidebar').classList.remove('open');
+  window.location.hash = name === 'workspace' ? '' : name;
+}
+
+$$('.nav-item').forEach((item) => item.addEventListener('click', () => showView(item.dataset.section)));
+$('#brandHome').addEventListener('click', () => showView('workspace'));
+
+function openPastThread(question) {
+  showView('workspace');
+  setTimeout(() => askQuestion(question), 80);
+}
+
+$$('.history-card').forEach((card) => card.addEventListener('click', () => openPastThread(card.dataset.question)));
+$$('.recent').forEach((item, index) => item.addEventListener('click', () => {
+  const questions = [
+    'What themes are emerging across customer feedback?',
+    'Summarize the key product risks.',
+    'Where do our research and roadmap disagree?'
+  ];
+  openPastThread(questions[index]);
 }));
+
+$('#newThread').addEventListener('click', () => {
+  thread.innerHTML = '';
+  thread.classList.remove('visible');
+  $('.hero-copy').style.display = 'block';
+  $('.suggestions').style.display = 'grid';
+  showView('workspace');
+  input.focus();
+});
+
+function filterItems(inputSelector, itemSelector, textGetter) {
+  $(inputSelector).addEventListener('input', (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    $$(itemSelector).forEach((item) => {
+      item.style.display = textGetter(item).toLowerCase().includes(query) ? '' : 'none';
+    });
+  });
+}
+
+filterItems('#sourceSearch', '.source-table .table-row:not(.table-head)', (item) => item.dataset.sourceName);
+filterItems('#historySearch', '.history-card', (item) => item.textContent);
+
+$$('.source-table .table-row:not(.table-head)').forEach((row) => row.addEventListener('click', () => {
+  const sourceName = row.dataset.sourceName;
+  const matchingSource = $$('.source').find((source) => source.querySelector('strong').textContent.trim() === sourceName);
+  matchingSource?.classList.toggle('active-source');
+  const included = matchingSource?.classList.contains('active-source');
+  row.querySelector('.ready').innerHTML = included ? '● Included' : '○ Excluded';
+  row.querySelector('.ready').style.color = included ? '#55a184' : '#9b96a0';
+  notify(`${sourceName} ${included ? 'included in' : 'excluded from'} context`);
+}));
+
+$('.filter-button').addEventListener('click', (event) => {
+  const labels = ['All types⌄', 'Connected only', 'Uploads only'];
+  const next = (labels.indexOf(event.currentTarget.textContent) + 1) % labels.length;
+  event.currentTarget.textContent = labels[next];
+  $$('.source-table .table-row:not(.table-head)').forEach((row) => {
+    const connection = row.children[1].textContent.toLowerCase();
+    row.style.display = next === 0 || (next === 1 && connection !== 'pdf upload') || (next === 2 && connection === 'pdf upload') ? '' : 'none';
+  });
+  notify(`Filter: ${labels[next].replace('⌄', '')}`);
+});
 
 $('.share-button').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(location.href); } catch (_) {}
   notify('Workspace link copied');
 });
 $('#addSource').addEventListener('click', () => $('#sourceDialog').showModal());
+$$('[data-open-source]').forEach((button) => button.addEventListener('click', () => $('#sourceDialog').showModal()));
 $$('.connector-grid button').forEach((button) => button.addEventListener('click', () => {
   if (button.value !== 'cancel') setTimeout(() => notify(`${button.querySelector('strong').textContent} selected`), 100);
 }));
@@ -205,3 +272,6 @@ $('#settingsToggle').addEventListener('click', () => {
 $('#depth').addEventListener('input', (event) => {
   $('#depthLabel').textContent = ['Precise', 'Focused', 'Expansive'][event.target.value - 1];
 });
+
+const initialView = location.hash.replace('#', '');
+if (['sources', 'history'].includes(initialView)) showView(initialView);
