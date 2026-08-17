@@ -45,7 +45,70 @@ function retrieve(question) {
     .slice(0, Number($('#depth').value) + 1);
 }
 
-function buildGroundedAnswer(results) {
+function getConversationalAnswer(question) {
+  const normalized = question.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const matches = (...patterns) => patterns.some((pattern) => pattern.test(normalized));
+
+  if (matches(/^(hi|hello|hey|good morning|good afternoon|good evening)\b/, /how are you/)) {
+    return {
+      heading: 'LUMEN ASSISTANT',
+      summary: 'Hello — I’m ready to help.',
+      text: 'Ask me what this project does, how to use the workspace, or a question about the active knowledge sources.',
+      citations: [], confidence: null
+    };
+  }
+
+  if (matches(/who i?are you/, /who are you/, /what are you/, /your name/, /tell me about yourself/)) {
+    return {
+      heading: 'ABOUT LUMEN',
+      summary: 'I’m Lumen, an evidence-first knowledge assistant.',
+      text: 'I help teams search connected documents, identify relevant context, and answer questions with visible source citations. If the available evidence does not support an answer, I say so instead of guessing.',
+      citations: [], confidence: null
+    };
+  }
+
+  if (matches(/what (is|does) (this|the) project/, /project (is )?about/, /purpose of (this|the) project/, /what (is|does) lumen/, /what does this (app|website)/)) {
+    return {
+      heading: 'PROJECT OVERVIEW',
+      summary: 'Lumen is a contextual retrieval-augmented generation workspace.',
+      text: 'The project brings knowledge from documents, research, interviews, and web sources into one searchable workspace. It retrieves passages related to a question, answers only from that evidence, and displays citations so users can verify important claims.',
+      citations: [], confidence: null
+    };
+  }
+
+  if (matches(/what can you do/, /how can you help/, /your capabilities/, /features/)) {
+    return {
+      heading: 'CAPABILITIES',
+      summary: 'I turn connected knowledge into verifiable answers.',
+      text: 'I can search active sources, summarize matching findings, compare evidence across documents, surface product risks and themes, and show where every answer came from. You can enable or disable sources and adjust retrieval depth from the context panel.',
+      citations: [], confidence: null
+    };
+  }
+
+  if (matches(/how (do|should|can) i use/, /how does (this|it) work/, /help me get started/)) {
+    return {
+      heading: 'GETTING STARTED',
+      summary: 'Choose sources, then ask a specific question.',
+      text: 'Use the knowledge panel to select the sources you trust, choose a retrieval depth, and type a question below. For the most useful answer, mention the topic, time period, or decision you are investigating. Review the displayed citations before using an answer for a critical decision.',
+      citations: [], confidence: null
+    };
+  }
+
+  if (matches(/thank you/, /^thanks\b/, /^thank you\b/)) {
+    return {
+      heading: 'LUMEN ASSISTANT',
+      summary: 'You’re welcome.',
+      text: 'Ask another question whenever you’re ready.',
+      citations: [], confidence: null
+    };
+  }
+
+  return null;
+}
+
+function buildGroundedAnswer(question, results) {
+  const conversational = getConversationalAnswer(question);
+  if (conversational) return conversational;
   if (!results.length) return {
     heading: 'NOT ENOUGH EVIDENCE',
     summary: 'The connected sources do not cover this question.',
@@ -73,7 +136,7 @@ function askQuestion(question) {
 
   setTimeout(() => {
     $('.loading')?.remove();
-    const response = buildGroundedAnswer(retrieve(question));
+    const response = buildGroundedAnswer(question, retrieve(question));
     const citations = response.citations.map((citation, index) => `<span class="citation">[${index + 1}] ${escapeHtml(citation)}</span>`).join('');
     thread.insertAdjacentHTML('beforeend', `
       <div class="message assistant">
