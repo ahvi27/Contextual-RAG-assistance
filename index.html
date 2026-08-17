@@ -70,6 +70,7 @@
           </div>
         </div>
         <div class="top-actions">
+          <button class="restore-context" id="restoreContext" hidden>▤ Context</button>
           <button class="icon-button" id="themeToggle" aria-label="Toggle theme">☼</button>
           <button class="share-button"><span>↗</span> Share</button>
         </div>
@@ -98,8 +99,8 @@
             </div>
             <div class="composer-bottom">
               <div>
-                <button type="button" class="tool-button" aria-label="Attach source">＋</button>
-                <button type="button" class="mode-button"><span>✦</span> Contextual mode <span>⌄</span></button>
+                <button type="button" class="tool-button" id="attachSource" aria-label="Attach source">＋</button>
+                <button type="button" class="mode-button" id="modeButton"><span>✦</span> <b id="modeLabel">Contextual mode</b> <span>⌄</span></button>
               </div>
               <span class="shortcut">⌘ ↵ to send</span>
             </div>
@@ -148,7 +149,7 @@
             <button class="settings-title" id="settingsToggle"><span>⚙ Retrieval settings</span><span id="settingsChevron">⌃</span></button>
             <div class="settings-body" id="settingsBody">
               <label><span>Retrieval depth <b id="depthLabel">Focused</b></span><input id="depth" type="range" min="1" max="3" value="2"></label>
-              <label class="toggle-row"><span><strong>Source diversity</strong><small>Balance results across sources</small></span><input type="checkbox" checked><i></i></label>
+              <label class="toggle-row"><span><strong>Source diversity</strong><small>Balance results across sources</small></span><input id="sourceDiversity" type="checkbox" checked><i></i></label>
             </div>
           </div>
         </aside>

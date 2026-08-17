@@ -64,15 +64,18 @@ function tokenize(value) {
 function retrieve(question) {
   const activeSources = $$('.source.active-source strong').map((node) => node.textContent.trim());
   const terms = tokenize(question);
-  return knowledge
+  const ranked = knowledge
     .filter((chunk) => activeSources.includes(chunk.source))
     .map((chunk) => ({
       ...chunk,
       score: terms.reduce((total, term) => total + (chunk.text.toLowerCase().includes(term) ? 2 : 0), 0)
     }))
     .filter((chunk) => chunk.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, Number($('#depth').value) + 1);
+    .sort((a, b) => b.score - a.score);
+  const diversified = $('#sourceDiversity').checked
+    ? ranked.filter((chunk, index, all) => all.findIndex((item) => item.source === chunk.source) === index)
+    : ranked;
+  return diversified.slice(0, Number($('#depth').value) + 1);
 }
 
 function getConversationalAnswer(question) {
@@ -145,11 +148,14 @@ function buildGroundedAnswer(question, results) {
     text: 'I can’t answer that from the active knowledge sources. Try rephrasing the question, enabling another source, or adding a document that covers this topic.',
     citations: [], confidence: null
   };
+  const style = $('#responseStyle').value;
+  const passages = style === 'Concise' ? results.slice(0, 1) : results;
+  const detail = style === 'Detailed' ? ' Taken together, these passages provide the strongest available support in the currently selected workspace context.' : '';
   return {
     heading: `ANSWER · ${results.length} SUPPORTING PASSAGE${results.length === 1 ? '' : 'S'}`,
     summary: results.length > 1 ? 'The evidence points to a consistent direction.' : 'One relevant finding is available.',
-    text: results.map((result) => result.text).join(' '),
-    citations: results.map((result) => result.citation),
+    text: passages.map((result) => result.text).join(' ') + detail,
+    citations: passages.map((result) => result.citation),
     confidence: results.length > 1 ? 'High confidence' : 'Limited evidence'
   };
 }
@@ -306,6 +312,7 @@ $('.share-button').addEventListener('click', async () => {
   notify('Workspace link copied');
 });
 $('#addSource').addEventListener('click', () => $('#sourceDialog').showModal());
+$('#attachSource').addEventListener('click', () => $('#sourceDialog').showModal());
 $$('[data-open-source]').forEach((button) => button.addEventListener('click', () => $('#sourceDialog').showModal()));
 $$('.connector-grid button').forEach((button) => button.addEventListener('click', () => {
   if (button.value !== 'cancel') setTimeout(() => notify(`${button.querySelector('strong').textContent} selected`), 100);
@@ -318,6 +325,12 @@ $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle(
 $('#collapsePanel').addEventListener('click', () => {
   $('.context-panel').style.display = 'none';
   $('.workspace').style.gridTemplateColumns = '1fr';
+  $('#restoreContext').hidden = false;
+});
+$('#restoreContext').addEventListener('click', () => {
+  $('.context-panel').style.display = '';
+  $('.workspace').style.gridTemplateColumns = '';
+  $('#restoreContext').hidden = true;
 });
 $('#settingsToggle').addEventListener('click', () => {
   const body = $('#settingsBody');
@@ -328,6 +341,18 @@ $('#settingsToggle').addEventListener('click', () => {
 $('#depth').addEventListener('input', (event) => {
   $('#depthLabel').textContent = ['Precise', 'Focused', 'Expansive'][event.target.value - 1];
 });
+
+$('#modeButton').addEventListener('click', () => {
+  const modes = ['Contextual mode', 'Precise mode', 'Explore mode'];
+  const next = (modes.indexOf($('#modeLabel').textContent) + 1) % modes.length;
+  $('#modeLabel').textContent = modes[next];
+  $('#depth').value = [2, 1, 3][next];
+  $('#depth').dispatchEvent(new Event('input'));
+  notify(`${modes[next]} enabled`);
+});
+
+$('.upgrade').addEventListener('click', () => notify('Your workspace is already using the full demo experience'));
+$('.profile button').addEventListener('click', () => notify('Profile menu opened for Alex Morgan'));
 
 const initialView = location.hash.replace('#', '');
 if (['sources', 'history', 'collections', 'insights', 'settings'].includes(initialView)) showView(initialView);
@@ -356,10 +381,13 @@ thread.addEventListener('click', async (event) => {
 });
 
 if (readStorage('lumen-dark-mode', false)) document.body.classList.add('dark');
-const savedPreferences = readStorage('lumen-preferences', { responseStyle: 'Balanced', showConfidence: true, requireCitations: true, theme: 'system' });
+const savedPreferences = readStorage('lumen-preferences', { responseStyle: 'Balanced', showConfidence: true, requireCitations: true, theme: 'system', retrievalDepth: 2, sourceDiversity: true });
 $('#responseStyle').value = savedPreferences.responseStyle;
 $('#showConfidence').checked = savedPreferences.showConfidence;
 $('#requireCitations').checked = savedPreferences.requireCitations;
+$('#depth').value = savedPreferences.retrievalDepth ?? 2;
+$('#depth').dispatchEvent(new Event('input'));
+$('#sourceDiversity').checked = savedPreferences.sourceDiversity ?? true;
 $$('.appearance-options button').forEach((button) => button.classList.toggle('active', button.dataset.theme === savedPreferences.theme));
 const storedSources = readStorage('lumen-active-sources', null);
 if (storedSources) {
@@ -415,9 +443,17 @@ $('#saveSettings').addEventListener('click', () => {
     responseStyle: $('#responseStyle').value,
     showConfidence: $('#showConfidence').checked,
     requireCitations: $('#requireCitations').checked,
-    theme: $('.appearance-options button.active')?.dataset.theme || 'system'
+    theme: $('.appearance-options button.active')?.dataset.theme || 'system',
+    retrievalDepth: Number($('#depth').value),
+    sourceDiversity: $('#sourceDiversity').checked
   };
   writeStorage('lumen-preferences', preferences);
   writeStorage('lumen-dark-mode', document.body.classList.contains('dark'));
   notify('Settings saved');
+});
+
+$('.card-title button')?.addEventListener('click', (event) => {
+  const periods = ['Weekly⌄', 'Monthly⌄', 'Quarterly⌄'];
+  event.currentTarget.textContent = periods[(periods.indexOf(event.currentTarget.textContent) + 1) % periods.length];
+  notify(`Chart view: ${event.currentTarget.textContent.replace('⌄', '')}`);
 });
